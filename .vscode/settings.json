@@ -1,0 +1,20 @@
+{
+    "idf.portWin": "COM11",
+    "idf.openOcdConfigs": [
+        "board/esp32s3-builtin.cfg"
+    ],
+    "idf.pythonInstallPath": "/usr/bin/python",
+    "files.associations": {
+        "array": "cpp",
+        "deque": "cpp",
+        "list": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "vector": "cpp",
+        "string_view": "cpp",
+        "initializer_list": "cpp",
+        "cstddef": "cpp",
+        "limits": "cpp"
+    }
+}
