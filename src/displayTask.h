@@ -3,13 +3,15 @@
  * @brief 显示任务管理
  * @details 该文件包含了显示相关功能的声明
 
- * @version 1.0
+ * @version 1.1
  * @date 2025-6-30
  */
+
 #include <Arduino.h>
 #include <TFT_eSPI.h>
 #pragma once
-extern SPIClass SPI_LCD; 
+
+extern SPIClass SPI_LCD;
 extern TFT_eSPI tft;
 
 #define BOARD_LCD_MOSI 2
