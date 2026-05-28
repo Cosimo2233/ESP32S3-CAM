@@ -2,8 +2,8 @@
  * @file faceDetectTask.cpp
  * @brief 人脸检测任务
  * @details 基于 esp-dl 的 MTMN 模型 (HumanFaceDetectMSR01) 进行人脸检测。
- *          检测到人脸后在帧缓冲区绘制矩形框，并触发自动拍照。
- * @version 1.0
+ *          检测到人脸后在帧缓冲区绘制矩形框和提示文字，不自动拍照。
+ * @version 1.1
  * @date 2025-6-30
  */
 
@@ -15,9 +15,6 @@
 #include <list>
 #include "human_face_detect_msr01.hpp"
 #include "fb_gfx.h"
-
-// 防抖：两次自动拍照的最小间隔（毫秒）
-#define AUTO_CAPTURE_COOLDOWN_MS 3000
 
 extern QueueHandle_t frameQueue;
 
@@ -43,6 +40,9 @@ static void draw_face_boxes(fb_data_t *fb, std::list<dl::detect::result_t> *resu
         fb_gfx_drawFastVLine(fb, x, y, h, color);
         fb_gfx_drawFastVLine(fb, x + w - 1, y, h, color);
     }
+
+    // 在画面顶部显示 "FACE DETECTED" 提示文字
+    fb_gfx_print(fb, 5, 5, color, "FACE DETECTED");
 }
 
 void faceDetectTask_Init()
@@ -55,8 +55,6 @@ void faceDetectTask(void *pvParameters)
     // 单阶段检测器：阈值 0.3, NMS 0.5, top_k 10, 缩放 0.2
     HumanFaceDetectMSR01 detector(0.3F, 0.5F, 10, 0.2F);
     camera_fb_t *fb = NULL;
-    unsigned long lastCaptureTime = 0;
-    bool savingInProgress = false;
 
     Serial.println("[FACE] Task started");
 
@@ -76,7 +74,7 @@ void faceDetectTask(void *pvParameters)
                 Serial.printf("[FACE] Detected %d face(s), score: %.2f\n",
                     results.size(), results.front().score);
 
-                // 在帧缓冲区上绘制人脸框
+                // 在帧缓冲区上绘制人脸框和提示文字
                 fb_data_t rfb;
                 rfb.width = fb->width;
                 rfb.height = fb->height;
@@ -84,15 +82,6 @@ void faceDetectTask(void *pvParameters)
                 rfb.bytes_per_pixel = 2;
                 rfb.format = FB_RGB565;
                 draw_face_boxes(&rfb, &results);
-
-                // 自动拍照（防抖 + 不在保存中）
-                unsigned long now = millis();
-                if (!showSavingPopup && (now - lastCaptureTime > AUTO_CAPTURE_COOLDOWN_MS))
-                {
-                    lastCaptureTime = now;
-                    Serial.println("[FACE] Auto capture triggered!");
-                    displayTask_PhotoSave();
-                }
             }
         }
 
