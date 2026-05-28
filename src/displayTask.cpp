@@ -16,6 +16,8 @@
 #include <TJpg_Decoder.h>
 #pragma once
 bool showSavingPopup = false;
+bool flashEnabled = false;
+extern volatile bool isRecording;
 SPIClass SPI_LCD(HSPI);
 TFT_eSPI tft;
 TFT_eSprite sprite = TFT_eSprite(&tft); // 双缓冲 Sprite
@@ -204,6 +206,26 @@ void displaycamera()
     sprite.setTextColor(TFT_YELLOW);
     sprintf(infoStr3, "Mode:%d", special);
     sprite.drawString(infoStr3, 210, 15);
+
+    // 录像指示器（REC 红点）
+    if (isRecording)
+    {
+      sprite.fillCircle(15, 15, 5, TFT_RED);
+      sprite.setTextColor(TFT_RED);
+      sprite.setTextSize(1);
+      sprite.drawString("REC", 25, 8);
+      sprite.setTextSize(2);
+    }
+
+    // 闪光灯指示器
+    if (flashEnabled)
+    {
+      sprite.setTextColor(TFT_ORANGE);
+      sprite.setTextSize(1);
+      sprite.drawString("FLASH", 270, 8);
+      sprite.setTextSize(2);
+    }
+
     // 显示固定信息
     sprite.pushImage(290, 105, 30, 30, photo);
     sprite.pushImage(290, 5, 30, 30, color);

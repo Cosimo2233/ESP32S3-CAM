@@ -42,6 +42,8 @@ KeyInfo keys[4] = {
 int btMIDstate = 0;
 int btTOPstate = 0;
 int btDownstate = 0;
+volatile bool recordingRequest = false;  // 录像开关请求
+volatile bool flashRequest = false;      // 闪光灯开关请求
 
 // 中断回调
 void IRAM_ATTR onKeyCamPress() { keys[0].flag = true; }
@@ -121,19 +123,14 @@ void handleKey(KeyInfo &key, const char *name, int &stateVar, void (*singleClick
   }
 }
 
-// 回调函数示例（你可按需修改）
+// 回调函数
 void camSingleClick() { displayTask_PhotoSave(); }
-void camDoubleClick()
-{
-  keyTask_LEDFlash(true);
-  displayTask_PhotoSave();
-  keyTask_LEDFlash(false);
-}
+void camDoubleClick() { displayTask_PhotoSave(); }
 void camLongPress()
 {
-  keyTask_LEDFlash(true);
-  displayTask_PhotoSave();
-  keyTask_LEDFlash(false);
+  // 长按拍照键：切换录像
+  recordingRequest = true;
+  Serial.println("拍照键长按：切换录像");
 }
 
 void topSingleClick() { btTOPstate = 1; }
@@ -146,7 +143,12 @@ void midLongPress() { Serial.println("中键长按触发"); }
 
 void downSingleClick() { btDownstate = 1; }
 void downDoubleClick() { Serial.println("下键双击触发"); }
-void downLongPress() { Serial.println("下键长按触发"); }
+void downLongPress()
+{
+  // 长按下键：切换闪光灯
+  flashRequest = true;
+  Serial.println("下键长按：切换闪光灯");
+}
 
 void keyTask(void *pvParameters)
 {

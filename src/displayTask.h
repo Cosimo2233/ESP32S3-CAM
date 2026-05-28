@@ -53,6 +53,7 @@ void displayTask_Init();
 void displayTask_ErrorLOG(const char *message);
 extern bool showSavingPopup;
 extern bool saveDone;
+extern bool flashEnabled;             // 闪光灯状态
 extern TaskHandle_t DisplayTaskHandle; // 从别的文件访问
 extern TaskHandle_t cameraTaskHandle;  // 从别的文件访问
  /**

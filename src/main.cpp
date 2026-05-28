@@ -13,6 +13,7 @@
 #include "tfCard.h"
 #include "webTask.h"
 #include "faceDetectTask.h"
+#include "recordingTask.h"
 #include <SD.h>
 
 #include <Arduino.h>
@@ -50,6 +51,8 @@ void setup()
   xTaskCreatePinnedToCore(keyTask, "keyTask", 4096, NULL, 3, NULL, 1);
   // 启动人脸检测任务（栈 8KB，优先级 2）
   xTaskCreatePinnedToCore(faceDetectTask, "faceDetect", 8192, NULL, 2, NULL, 1);
+  // 启动录像任务（栈 6KB，优先级 2）
+  xTaskCreatePinnedToCore(recordingTask, "recording", 6144, NULL, 2, NULL, 1);
 }
 
 void loop()

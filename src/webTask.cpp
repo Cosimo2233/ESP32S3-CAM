@@ -53,12 +53,16 @@ void webTask_listFiles()
     if (!entry)
       break;
     String name = entry.name();
-    if (!entry.isDirectory() && (name.endsWith(".jpg") || name.endsWith(".png")))
+    if (!entry.isDirectory() && (name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".avi")))
     {
       html += "<li>";
       html += "<p>文件名：" + name + "</p>";
-      html += "<a href=\"/view?file=" + name + "\">📷 预览</a >";
-      html += "<a href=\"/download?file=" + name + "\">⬇ 下载</a >";
+      if (name.endsWith(".avi")) {
+        html += "<a href=\"/download?file=" + name + "\">⬇ 下载视频</a >";
+      } else {
+        html += "<a href=\"/view?file=" + name + "\">📷 预览</a >";
+        html += "<a href=\"/download?file=" + name + "\">⬇ 下载</a >";
+      }
       html += "<a href=\"/delete?file=" + name + "\" onclick=\"return confirm('确定删除 " + name + " 吗？')\">❌ 删除</a >";
       html += "</li>";
     }
@@ -104,7 +108,7 @@ void webTask_HandleView()
     server.send(404, "text/plain", "图片未找到");
     return;
   }
-  String contentType = filename.endsWith(".jpg") ? "image/jpeg" : "image/png";
+  String contentType = filename.endsWith(".jpg") ? "image/jpeg" : filename.endsWith(".png") ? "image/png" : "application/octet-stream";
   server.streamFile(file, contentType);
   file.close();
 }

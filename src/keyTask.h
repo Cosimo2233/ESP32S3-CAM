@@ -21,11 +21,9 @@ extern volatile bool keyDownPressed;
 extern int btTOPstate;
 extern int btMIDstate;
 extern int btDownstate;
- /**
-  * @brief 按键任务初始化
-  * @param 无
-  * @note  配置按键引脚
-  */
+extern volatile bool recordingRequest;   // 录像开关请求
+extern volatile bool flashRequest;       // 闪光灯开关请求
+
 void keyTask_Init();
  /**
   * @brief 补光灯控制函数

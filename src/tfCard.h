@@ -43,3 +43,32 @@ void tfCard_SDWriteFile(const uint8_t *data, size_t size);
   * @note  用于保存图片时的图片名
 */
 int tfCard_GetNextPhotoIndex();
+
+/**
+  * @brief 获取下一个录像文件索引
+  * @param 无
+  * @note  用于录像时自动命名 video_X.avi
+*/
+int tfCard_GetNextVideoIndex();
+
+/**
+  * @brief 打开录像文件（保持打开状态）
+  * @param index 文件序号
+  * @return 已打开的文件对象
+  * @note  返回已打开的 File 对象，用于持续写入帧
+  */
+File tfCard_OpenVideoFile(int index);
+
+/**
+  * @brief 写入一帧到已打开的录像文件
+  * @param file 已打开的文件引用
+  * @param data 帧数据
+  * @param size 数据大小
+  */
+void tfCard_WriteFrame(File &file, const uint8_t *data, size_t size);
+
+/**
+  * @brief 关闭录像文件
+  * @param file 已打开的文件引用
+  */
+void tfCard_CloseVideoFile(File &file);
