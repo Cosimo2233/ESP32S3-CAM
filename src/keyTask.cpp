@@ -137,7 +137,11 @@ void camLongPress()
 }
 
 void topSingleClick() { btTOPstate = 1; }
-void topDoubleClick() { Serial.println("上键双击触发"); }
+void topDoubleClick() {
+  // 上键双击：触发人脸注册
+  enrollRequest = true;
+  Serial.println("上键双击：人脸注册");
+}
 void topLongPress() { Serial.println("上键长按触发"); }
 
 void midSingleClick() { btMIDstate = !btMIDstate; }
