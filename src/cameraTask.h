@@ -2,7 +2,8 @@
  * @file cameraTask.h
  * @brief 摄像头任务管理
  * @details 该文件包含了摄像头相关功能的声明
- * @version 1.1
+
+ * @version 1.0
  * @date 2025-6-30
  */
 
@@ -11,8 +12,8 @@
 #include <freertos/queue.h>
 #pragma once
 
-#define PWDN_GPIO_NUM 46
-#define RESET_GPIO_NUM -1
+#define PWDN_GPIO_NUM 46  
+#define RESET_GPIO_NUM -1 
 #define XCLK_GPIO_NUM -1
 #define SIOD_GPIO_NUM 17
 #define SIOC_GPIO_NUM 18
@@ -31,14 +32,37 @@
 extern TFT_eSPI tft;
 extern camera_config_t config;
 extern QueueHandle_t frameQueue;
-extern QueueHandle_t jpegQueueAtl;  // USB 流任务的信号队列
 extern sensor_t *sensor;
 extern int special;
 extern int special2;
-extern volatile bool usbStreamingEnabled;
 
+ /**
+  * @brief 初始化摄像头配置
+  * @param 无
+  * @note 用于初始化摄像头RGB565格式的配置
+  */
 void cameraTask_InitCameraConfig();
+ /**
+  * @brief 初始化摄像头配置
+  * @param 无
+  * @note 用于初始化摄像头JPEG格式的配置
+  */
 void cameraTask_InitPicConfig();
+ /**
+  * @brief 摄像头RTOS任务
+  * @param 无
+  * @note 主任务处理
+  */
 void cameraTask(void *pvParameters);
+ /**
+  * @brief 初始化摄像头软件
+  * @param 无
+  * @note 配置软件功能
+  */
 void cameraTask_Init();
+ /**
+  * @brief 初始化摄像头
+  * @param 无
+  * @note 摄像头初始化及帧队列
+  */
 void cameraTask_InitCameraSoftwareConfig();

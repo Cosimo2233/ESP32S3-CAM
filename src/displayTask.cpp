@@ -1,8 +1,9 @@
 /**
- * @file displayTask.cpp
+ * @file displayTask.h
  * @brief 显示任务管理
- * @details 该文件实现了显示相关功能
- * @version 1.1
+ * @details 该文件包含了显示相关功能的声明
+
+ * @version 1.0
  * @date 2025-6-30
  */
 #include "displayTask.h"
@@ -13,11 +14,11 @@
 #include "keyTask.h"
 #include "config.h"
 #include <TJpg_Decoder.h>
-
+#pragma once
 bool showSavingPopup = false;
 SPIClass SPI_LCD(HSPI);
 TFT_eSPI tft;
-TFT_eSprite sprite = TFT_eSprite(&tft);
+TFT_eSprite sprite = TFT_eSprite(&tft); // 双缓冲 Sprite
 volatile int currentPhotoIndex = -1;
 volatile bool photoViewMode = false;
 static unsigned long lastMillis = 0;
@@ -26,41 +27,27 @@ float fps = 0;
 camera_fb_t *fb = NULL;
 extern TaskHandle_t cameraTaskHandle;
 extern SemaphoreHandle_t camMutex;
-
-// TJpg_Decoder 回调 —— 逐块推送到 TFT
-bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t *bitmap)
-{
-  if (y >= tft.height())
-    return 0;
-  tft.pushImage(x, y, w, h, bitmap);
-  return 1;
-}
-
-// TJpg_Decoder 回调 —— 逐块推送到 Sprite
-static TFT_eSprite *decoderSprite = NULL;
-bool sprite_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t *bitmap)
-{
-  if (decoderSprite && y < decoderSprite->height())
-  {
-    decoderSprite->pushImage(x, y, w, h, bitmap);
-  }
-  return 1;
-}
-
 void displayTask_PhotoSave()
 {
-  showSavingPopup = true;
-  vTaskDelay(100 / portTICK_PERIOD_MS);
 
+
+  showSavingPopup = true;
+  vTaskDelay(100 / portTICK_PERIOD_MS); // 给予一定延时，确保屏幕能显示保存提示
+
+  // 1. 暂停 cameraTask
   if (cameraTaskHandle != NULL)
   {
     vTaskDelete(cameraTaskHandle);
     cameraTaskHandle = NULL;
+    Serial.println("Camera task deleted");
+    // 等待 DMA 或相机控制器完全释放（非常关键）
     vTaskDelay(30 / portTICK_PERIOD_MS);
   }
   esp_camera_deinit();
+  // vTaskDelay(100 / portTICK_PERIOD_MS);  // 再次确保硬件资源释放
   cameraTask_InitPicConfig();
   esp_err_t err = esp_camera_init(&config);
+
   cameraTask_InitCameraSoftwareConfig();
   if (err != ESP_OK)
   {
@@ -68,20 +55,26 @@ void displayTask_PhotoSave()
     return;
   }
 
+  // 5. 拍照
   camera_fb_t *fb = esp_camera_fb_get();
-  tfCard_SDWriteFile(fb->buf, fb->len);
-  esp_camera_fb_return(fb);
 
+  tfCard_SDWriteFile(fb->buf, fb->len);
+  
+  esp_camera_fb_return(fb);
+  // 6. 切回预览模式
   esp_camera_deinit();
   vTaskDelay(100 / portTICK_PERIOD_MS);
   cameraTask_InitCameraConfig();
   esp_camera_init(&config);
   cameraTask_InitCameraSoftwareConfig();
+  // 重建 cameraTask
+  // keyTask_LEDFlash(false);
   showSavingPopup = false;
   xTaskCreatePinnedToCore(cameraTask, "CameraTask", 4096, NULL, 1, &cameraTaskHandle, 0);
+  Serial.println("Camera task restarted");
 }
-
-bool tft_output_gallery(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t *bitmap)
+// Tjpg_Decoder回调函数
+bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t *bitmap)
 {
   if (y >= tft.height())
     return 0;
@@ -99,8 +92,8 @@ void displayTask_Gallery(int index)
        TJpgDec.setJpgScale(8);
   #endif
 
-  TJpgDec.setCallback(tft_output_gallery);
-  tft.setSwapBytes(true);
+  TJpgDec.setCallback(tft_output);
+  tft.setSwapBytes(true); // We need to swap the colour bytes (endianess)
   char filename[32];
   sprintf(filename, "/photo_%d.jpg", index);
   tft.fillScreen(TFT_BLACK);
@@ -124,11 +117,12 @@ void displayTask_Gallery(int index)
   tft.pushImage(290, 205, 30, 30, down);
   Serial.printf("Showing: %s\n", filename);
 }
-
+// 屏幕初始化
 void displayTask_Init()
 {
   SPI_LCD.begin(BOARD_LCD_SCK, BOARD_LCD_MOSI, BOARD_LCD_CS);
   tft.begin();
+
   tft.setRotation(1);
   pinMode(BOARD_LCD_BL, OUTPUT);
   digitalWrite(BOARD_LCD_BL, HIGH);
@@ -136,10 +130,12 @@ void displayTask_Init()
   tft.pushImage(0, 0, 320, 240, logo);
   delay(5000);
   tft.fillScreen(TFT_BLACK);
-  TJpgDec.setJpgScale(1);
+  TJpgDec.setJpgScale(8);
   TJpgDec.setCallback(tft_output);
+ // tft.setSwapBytes(true); // We need to swap the colour bytes (endianess)
 }
 
+// 绘制 3x3 网格
 void displayTask_DrawGrid3x3(uint16_t *img, int w, int h, uint16_t color)
 {
   int cellW = w / 3, cellH = h / 3;
@@ -154,7 +150,7 @@ void displayTask_DrawGrid3x3(uint16_t *img, int w, int h, uint16_t color)
     img[2 * cellH * w + x] = color;
   }
 }
-
+//
 void displayTask_ErrorLOG(const char *message)
 {
   tft.fillScreen(TFT_BLACK);
@@ -163,15 +159,20 @@ void displayTask_ErrorLOG(const char *message)
   tft.setCursor(5, 170);
   tft.println(message);
   tft.pushImage(100, 10, 128, 128, tfcard);
-  while (1) { delay(1000); }
+  while (1)
+  {
+    delay(1000); // 停止在错误状态
+  }
 }
-
+// 显示相机画面
 void displaycamera()
 {
+  // 从帧队列中接收摄像头帧缓冲区
   if (xQueueReceive(frameQueue, &fb, portMAX_DELAY) == pdTRUE)
   {
     frames++;
     unsigned long now = millis();
+    // 计算 FPS
     if (now - lastMillis >= 1000)
     {
       fps = frames * 1000.0f / (now - lastMillis);
@@ -203,17 +204,19 @@ void displaycamera()
     sprite.setTextColor(TFT_YELLOW);
     sprintf(infoStr3, "Mode:%d", special);
     sprite.drawString(infoStr3, 210, 15);
-
+    // 显示固定信息
     sprite.pushImage(290, 105, 30, 30, photo);
     sprite.pushImage(290, 5, 30, 30, color);
+    // sprite.pushImage(0, 0, 150, 25, minilogo);
     sprite.pushImage(290, 205, 30, 30, sun);
-
+    // 显示 DPI 信息
     sprite.setTextColor(TFT_YELLOW);
     sprintf(infoStr3, "light:%d", special2);
     sprite.drawString(infoStr3, 195, 220);
     sprintf(infoStr3, "DPI: %dx%d", w, h);
     sprite.drawString(infoStr3, 5, 220);
 
+    // 弹窗提示
     if (showSavingPopup)
     {
       sprite.setTextColor(TFT_YELLOW, TFT_BLACK);
@@ -227,6 +230,7 @@ void displaycamera()
   }
 }
 
+// 主显示任务（预览/查看照片模式切换）
 void displayTask(void *pvParameters)
 {
   static bool executed = false;
@@ -238,24 +242,32 @@ void displayTask(void *pvParameters)
       tft.setSwapBytes(false);
       executed = false;
       photoViewMode = false;
-      displaycamera();
+      displaycamera(); // 预览模式
 
       if (btTOPstate == 1)
       {
         btTOPstate = 0;
         if (special > 5)
+        {
           special = 0;
+        }
         else
+        {
           special++;
+        }
         cameraTask_InitCameraSoftwareConfig();
       }
       if (btDownstate == 1)
       {
         btDownstate = 0;
         if (special2 > 1)
+        {
           special2 = -2;
+        }
         else
+        {
           special2++;
+        }
         cameraTask_InitCameraSoftwareConfig();
       }
     }
@@ -263,6 +275,7 @@ void displayTask(void *pvParameters)
     {
       if (!executed)
       {
+        // 第一次进入相册
         int lastIndex = tfCard_GetNextPhotoIndex() - 1;
         if (lastIndex >= 1)
         {
@@ -272,11 +285,13 @@ void displayTask(void *pvParameters)
         }
         else
         {
+
           displayTask_ErrorLOG("  No photos found .\n\n  Please take photos first .");
         }
         executed = true;
       }
 
+      // 在照片浏览模式中响应 上下键
       if (photoViewMode)
       {
         if (btTOPstate == 1)
@@ -300,6 +315,6 @@ void displayTask(void *pvParameters)
       }
     }
 
-    vTaskDelay(10 / portTICK_PERIOD_MS);
+    vTaskDelay(10 / portTICK_PERIOD_MS); // 控制刷新速率
   }
 }

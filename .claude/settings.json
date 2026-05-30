@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Read(//c/Users/29871/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/qio_opi/include/**)"
-    ]
-  }
-}
