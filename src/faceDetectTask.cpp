@@ -120,7 +120,7 @@ void faceDetectTask_Init()
 void faceDetectTask(void *pvParameters)
 {
     // 双阶段检测（MSR01 粗检 + MNP01 精检+关键点）
-    detector_s1 = new HumanFaceDetectMSR01(0.05F, 0.5F, 10, 0.1F);
+    detector_s1 = new HumanFaceDetectMSR01(0.1F, 0.5F, 10, 0.3F);
     detector_s2 = new HumanFaceDetectMNP01(0.5F, 0.3F, 5);
     recognizer  = new FaceRecognition112V1S8();
     recognizer->set_thresh(0.55F);
