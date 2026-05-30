@@ -108,8 +108,14 @@ static void drawUI(fb_data_t *fb, std::list<dl::detect::result_t> *results, cons
         fb_gfx_drawFastVLine(fb, x, y, h, c);
         fb_gfx_drawFastVLine(fb, x + w - 1, y, h, c);
     }
-    if (text && strlen(text) > 0)
-        fb_gfx_print(fb, 5, 5, c, text);
+    if (text && strlen(text) > 0) {
+        // 在第一个检测到的人脸框的左上角显示名字
+        auto &first = results->front();
+        int labelX = first.box[0];
+        int labelY = first.box[1] - 16;  // 框上方16像素
+        if (labelY < 0) labelY = first.box[1]; // 如果框靠近顶部就放在框内
+        fb_gfx_print(fb, labelX, labelY, c, text);
+    }
 }
 
 void faceDetectTask_Init()
