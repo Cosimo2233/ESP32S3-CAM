@@ -513,7 +513,7 @@
                 "ARDUINO=10812",
                 "ARDUINO_VARIANT=\"esp32s3\"",
                 "ARDUINO_BOARD=\"Espressif ESP32-S3-DevKitC-1-N8 (8 MB QD, No PSRAM)\"",
-                "ARDUINO_PARTITION_default",
+                "ARDUINO_PARTITION_partitions_8mb",
                 ""
             ],
             "cStandard": "gnu99",
