@@ -8,6 +8,7 @@
  */
 #include <Arduino.h>
 #include "displayTask.h"
+#include "faceDetectTask.h"
 #define KEY_CAM_NUM 10
 #define KEY_TOP_NUM 9
 #define KEY_MID_NUM 8
